@@ -1,0 +1,143 @@
+#!/usr/bin/env python3
+import time
+import itertools
+import string
+import hashlib
+import random
+
+def brute_force_enhanced():
+    """Enhanced brute-force demo with charset menu and timing stats."""
+    print("\nBrute-Force Demo")
+    print(" 1) Digits only (0-9)")
+    print(" 2) Lowercase letters (a-z)")
+    print(" 3) Alphanumeric (a-z, 0-9)")
+    print(" 4) All characters (a-z, A-Z, 0-9, punctuation)")
+    choice = input("Select charset (1-4): ").strip()
+
+    if choice == '1':
+        charset = string.digits
+    elif choice == '2':
+        charset = string.ascii_lowercase
+    elif choice == '3':
+        charset = string.ascii_lowercase + string.digits
+    elif choice == '4':
+        charset = (string.ascii_lowercase + string.ascii_uppercase +
+                   string.digits + string.punctuation)
+    else:
+        print("Invalid choice.")
+        return
+
+    target = input("Enter the string to brute-force: ").strip()
+    if any(c not in charset for c in target):
+        print("Error: target contains characters not in chosen charset.")
+        return
+
+    length = len(target)
+    total = len(charset) ** length
+
+    print(f"-> Brute forcing '{target}' (length {length}) on charset size {len(charset)}")
+    start = time.time()
+    for count, tup in enumerate(itertools.product(charset, repeat=length), 1):
+        guess = ''.join(tup)
+        print(f"Trying {guess}")
+        if guess == target:
+            elapsed = time.time() - start
+            speed = count / elapsed
+            print(f"[+] Cracked '{guess}' in {elapsed:.4f}s with {count} tries :)")
+            print(f"    -> Speed: {speed:.2f} attempts/sec")
+            print(f"    -> Full keyspace ({total} combos) would take ~{total/speed:.2f}s "
+                  f"(~{total/speed/3600:.2f}h)")
+            example_len = max(length + 1, 8)
+            example_space = len(charset) ** example_len
+            print(f"    -> Example: {example_len}-char space (~{example_space} combos) "
+                  f"would take ~{example_space/speed/3600:.2f}h")
+            return
+    print("[-] Password not found.")
+
+def dictionary_attack_demo():
+    """Simple dictionary attack demo."""
+    common = ["password", "123456", "qwerty", "letmein", "dragon",
+              "abc123", "monkey", "sunshine", "iloveyou"]
+    print("\nDictionary Attack Demo")
+    target = input("Enter the string to find in dictionary: ").strip()
+    start = time.time()
+    for pwd in common:
+        print(f"Trying {pwd}")
+        if pwd == target:
+            print(f"[+] Found '{pwd}' in {time.time() - start:.4f}s")
+            return
+    print("[-] '{target}' not in dictionary after {len(common)} tries")
+
+def hash_and_verify_demo():
+    """Password hashing & verification with salt."""
+    print("\nHash & Verify Demo")
+    pwd = input("Enter a password to hash: ").strip()
+    salt = hashlib.sha256(str(random.random()).encode()).hexdigest()[:16]
+    stored_hash = hashlib.sha256((salt + pwd).encode()).hexdigest()
+    print(f"Salt: {salt}")
+    print(f"Stored hash: {stored_hash}")
+    attempt = input("Re-enter password to verify: ").strip()
+    check = hashlib.sha256((salt + attempt).encode()).hexdigest()
+    if check == stored_hash:
+        print("[+] Password verified successfully :)")
+    else:
+        print("[-] Verification failed.")
+
+def otp_demo():
+    """One-Time Password (OTP) demo."""
+    print("\nOTP (2FA) Demo")
+    code = f"{random.randint(0, 999999):06d}"
+    print(f"Generated OTP (valid 30s): {code}")
+    start = time.time()
+    entry = input("Enter the OTP: ").strip()
+    elapsed = time.time() - start
+    if elapsed > 30:
+        print("[-] OTP expired.")
+    elif entry == code:
+        print("[+] OTP verified :)")
+    else:
+        print("[-] Incorrect OTP.")
+
+def rate_limit_demo():
+    """Rate-limiting demo: 3 wrong tries → 10s block."""
+    print("\nRate-Limiting Demo")
+    correct = input("Set your demo password: ").strip()
+    attempts = 0
+    block_until = 0
+    while True:
+        if time.time() < block_until:
+            wait = int(block_until - time.time())
+            print(f"Too many attempts. Try again in {wait}s")
+            time.sleep(1)
+            continue
+        entry = input("Enter password: ").strip()
+        if entry == correct:
+            print("[+] Access granted :)")
+            break
+        else:
+            print("[-] Wrong password.")
+            attempts += 1
+            if attempts >= 3:
+                block_until = time.time() + 10
+                print("Blocked for 10 seconds.")
+
+def main():
+    menu = {
+        '1': ("Brute-force demo", brute_force_enhanced),
+        '2': ("Dictionary attack demo", dictionary_attack_demo),
+        '3': ("Hash & verify demo", hash_and_verify_demo),
+        '4': ("OTP (2FA) demo", otp_demo),
+        '5': ("Rate-limiting demo", rate_limit_demo),
+    }
+    print("Practical Cybersec Demo Menu:")
+    for k, (desc, _) in menu.items():
+        print(f" {k}) {desc}")
+    choice = input("Choose (1-5): ").strip()
+    if choice in menu:
+        menu[choice][1]()
+    else:
+        print("Invalid choice.")
+
+if __name__ == "__main__":
+    main()
+
